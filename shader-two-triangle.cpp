@@ -34,7 +34,7 @@ using namespace std;
 
   UPDATE: Sat 18 Dec 23:33:42 2021 
   1. Use raw string in shader string
-  2. Add translation matrix to translate the curve
+  2. Add translation matrix to translate the triangle 
  */
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -71,91 +71,6 @@ std::string vertexShaderStr = R"(
 const char *vertexShaderSource = vertexShaderStr.c_str();
 
 const char *fragmentShaderSource = fragStr.c_str(); 
-
-void fun(float a, int sz, float arr[300]){
-  vector<float> vx;
-  vector<float> vy;
-  float del = (float)1/sz;
-  for(int i = 0; i < sz; i++){
-    float val = del*i;
-    vx.push_back(val);
-    vy.push_back(a*val*val);
-    arr[i] = a*val*val;
-  }
-
-  /**
-   *  0 1 2 3 4 5
-   *  -3 -2 -1 0 1 2
-   */
-  vector<float> repv = repeatVec(100, (float)0.0);
-  int k = 0;
-  for(int i = 0; i < 100; i++){
-    arr[k] = vx[i];
-    arr[k+1] = vy[i];
-    arr[k+2] = repv[i];
-    k = k + 3;
-  }
-}
-/**
- *   1/2
- *   1 x 1/2,     2 x 1/2
- *    (1/2)(1/2)    1 x 1
- *  
- *
- *  
- *   |               |             |
- *   offset+0     offset+1     offset+2
- */ 
-const int xyzVertexes = 3*3;
-void fillArray(float arr[xyzVertexes]){
-  int nVert = (int)(xyzVertexes/3); 
-  float delta = (float)1/nVert;
-  for(int i = 0; i < nVert; i++){
-    float val = delta*(i + 1);
-    int offset = 3*i ;
-    arr[offset+0] = val;
-    arr[offset+1] = val*val;
-    arr[offset+2] = 0.0f;
-  }
-}
-
-void drawTriangle(unsigned int VBO2, unsigned int VAO2){
-    // BEG_Draw_triangle
-    float triVert[] = {  //  R     G     B
-         0.5f, -0.5f, 0.0f,   1.0f, 0.0f, 0.0f, 
-        -0.5f, -0.5f, 0.0f,   0.0f, 1.0f, 0.0f, 
-         0.0f,  0.5f, 0.0f,   0.0f, 0.0f, 1.0f 
-    };
-
-    // unsigned int VBO2, VAO2;
-    //            |      +-> vertex array object
-    //            +-> vertex buffer object
-    glGenVertexArrays(1, &VAO2);
-    //                |
-    //                + -> the number of vertex array object names to generate
-    //
-    glGenBuffers(1, &VBO2);
-
-    glBindVertexArray(VAO2);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(triVert), triVert, GL_STATIC_DRAW);
-
-    //                       + -> specify number of components per generic vertex attribute
-    //                       ↓ 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
-    //                                                 ↑ 
-    //                                                 + next vertex shift 6 floats
-    //
-    glEnableVertexAttribArray(0);
-
-    // color attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)(3*sizeof(float)));
-    //                                                 ↑
-    //                                                 + -> next color shift 6 floats
-    //
-    glEnableVertexAttribArray(1);
-}
 
 
 
@@ -205,6 +120,7 @@ int main(){
     if (!success) {
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+        exit(1);
     }
     // fragment shader
     int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -215,6 +131,7 @@ int main(){
     if (!success) {
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+        exit(1);
     }
     // link shaders
     int shaderProgram = glCreateProgram();
@@ -226,6 +143,7 @@ int main(){
     if (!success) {
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        exit(1);
     }
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
@@ -237,18 +155,18 @@ int main(){
          0.0f,  0.5f, 0.0f,   0.0f, 0.0f, 1.0f 
     };
 
-    unsigned int VBO2, VAO2;
+    unsigned int VBO1, VAO1;
     //            |      +-> vertex array object
     //            +-> vertex buffer object
-    glGenVertexArrays(1, &VAO2);
+    glGenVertexArrays(1, &VAO1);
     //                |
     //                + -> the number of vertex array object names to generate
     //
-    glGenBuffers(1, &VBO2);
+    glGenBuffers(1, &VBO1);
 
-    glBindVertexArray(VAO2);
+    glBindVertexArray(VAO1);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO1);
     glBufferData(GL_ARRAY_BUFFER, sizeof(triVert), triVert, GL_STATIC_DRAW);
 
     //                       + -> specify number of components per generic vertex attribute
@@ -275,18 +193,18 @@ int main(){
          0.9f,  0.2f, 0.0f,   0.0f, 0.0f, 1.0f 
     };
 
-    unsigned int VBO3, VAO3;
+    unsigned int VBO2, VAO2;
     //            |      +-> vertex array object
     //            +-> vertex buffer object
-    glGenVertexArrays(1, &VAO3);
+    glGenVertexArrays(1, &VAO2);
     //                |
     //                + -> the number of vertex array object names to generate
     //
-    glGenBuffers(1, &VBO3);
+    glGenBuffers(1, &VBO2);
 
-    glBindVertexArray(VAO3);
+    glBindVertexArray(VAO2);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO3);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO2);
     glBufferData(GL_ARRAY_BUFFER, sizeof(triVert3), triVert3, GL_STATIC_DRAW);
 
     //                       + -> specify number of components per generic vertex attribute
@@ -324,7 +242,7 @@ int main(){
         int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
         glUniform4f(vertexColorLocation, 0.0f, 1.0f, 0.0f, 1.0f);
 
-        glBindVertexArray(VAO2);
+        glBindVertexArray(VAO1);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
         // END_triangle_1
         //
@@ -333,7 +251,7 @@ int main(){
         int vertexColorLocation3 = glGetUniformLocation(shaderProgram, "ourColor");
         glUniform4f(vertexColorLocation3, 1.0f, 0.0f, 0.0f, 1.0f);
 
-        glBindVertexArray(VAO3);
+        glBindVertexArray(VAO2);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 3);
         // END_triangle_3
 
@@ -349,8 +267,8 @@ int main(){
     // glDeleteVertexArrays(0, &VAO);
     // glDeleteBuffers(0, &VBO);
     
-    glDeleteVertexArrays(1, &VAO2);
-    glDeleteBuffers(1, &VBO2);
+    glDeleteVertexArrays(1, &VAO1);
+    glDeleteBuffers(1, &VBO1);
     glDeleteProgram(shaderProgram);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
