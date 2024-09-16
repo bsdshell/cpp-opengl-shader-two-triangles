@@ -75,6 +75,16 @@ std::string fragStr = R"(
     void main()
     {
        FragColor = ourColor;
+        /* 
+       vec2 fragCoord = gl_FragCoord.xy;
+       float dist = distance(fragCoord/2, fragCoord);
+       if (dist < 0.2) {
+          FragColor = vec4(1, 0, 0, 1.0);
+       }else{
+          // FragColor = vec4(0, 0, 0, 1.0);
+          discard;
+       }
+       */
     }
 )";
 
@@ -220,8 +230,10 @@ int main(){
     //                       + -> specify number of components per generic vertex attribute
     //                       ↓ 
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(float), (void*)0);
-    //                                                 ↑ 
-    //                                                 + next vertex shift 6 floats
+    //                       |                         ↑ 
+    //                       |                         + next vertex shift 6 floats
+    //                       |
+    //                       + -> number of vertex, vertice, vertexes
     //
     glEnableVertexAttribArray(0);
 
